@@ -57,3 +57,4 @@ __pycache__/
 # 本地打包与临时目录
 /agent-dist/
 /.tmp/
+/output_apks/
