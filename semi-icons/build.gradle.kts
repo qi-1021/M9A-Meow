@@ -8,3 +8,8 @@ plugins {
 android {
     namespace = "com.aliothmoon.maafw.semiicons"
 }
+
+dependencies {
+    implementation(libs.androidx.appcompat)
+}
+
