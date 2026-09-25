@@ -1,0 +1,177 @@
+name: Build M9A Android APK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+      abi:
+        description: 'Target Architecture'
+        required: true
+        default: 'arm64-v8a'
+        type: choice
+        options:
+          - arm64-v8a
+          - universal
+      maafw_tag:
+        description: 'MaaFramework Tag (empty = latest)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository with Submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android NDK & SDK Tools
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          link-to-sdk: true
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python Build Dependencies
+        run: |
+          python -m pip install --upgrade pip packaging pillow
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: Prepare M9A Assets & OCR Models
+        run: |
+          python scripts/prepare_m9a.py
+
+      - name: Setup MaaFramework Libraries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MAAFW_ARGS=""
+          if [ -n "${{ github.event.inputs.maafw_tag }}" ]; then
+            MAAFW_ARGS="--tag ${{ github.event.inputs.maafw_tag }}"
+          fi
+
+          if [ "${{ github.event.inputs.abi }}" = "universal" ]; then
+            python scripts/setup_maa_framework.py $MAAFW_ARGS
+          else
+            python scripts/setup_maa_framework.py --abi arm64-v8a $MAAFW_ARGS
+          fi
+
+      - name: Build Python Agent Bundle
+        run: |
+          if [ "${{ github.event.inputs.abi }}" = "universal" ]; then
+            echo "[INFO] Building Python Agent Runtime for x86_64..."
+            python scripts/build_agent_bundle.py \
+              --out agent-dist \
+              --requirements upstream/m9a/requirements.txt \
+              --no-deps \
+              --exclude pillow --require pillow==11.0.0 \
+              --extra-index-url https://chaquo.com/pypi-13.1/ \
+              --abi x86_64
+
+            echo "[INFO] Building Python Agent Runtime for arm64-v8a..."
+            python scripts/build_agent_bundle.py \
+              --out agent-dist \
+              --requirements upstream/m9a/requirements.txt \
+              --no-deps \
+              --exclude pillow --require pillow==11.0.0 \
+              --extra-index-url https://chaquo.com/pypi-13.1/ \
+              --abi arm64-v8a
+
+            sed -i 's/abi: \[arm64-v8a\]/abi: \[arm64-v8a, x86_64\]/' pi-profile.yaml
+            echo "build.debugAbi=arm64-v8a,x86_64" > local.properties
+            echo "build.releaseAbi=arm64-v8a,x86_64" >> local.properties
+          else
+            echo "[INFO] Building Python Agent Runtime for arm64-v8a..."
+            python scripts/build_agent_bundle.py \
+              --out agent-dist \
+              --requirements upstream/m9a/requirements.txt \
+              --no-deps \
+              --exclude pillow --require pillow==11.0.0 \
+              --extra-index-url https://chaquo.com/pypi-13.1/ \
+              --abi arm64-v8a
+
+            echo "build.debugAbi=arm64-v8a" > local.properties
+            echo "build.releaseAbi=arm64-v8a" >> local.properties
+          fi
+          echo "pi.profile=pi-profile.yaml" >> local.properties
+
+      - name: Build APK via Gradle
+        run: |
+          chmod +x ./gradlew
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          if [ "$BUILD_TYPE" = "release" ]; then
+            ./gradlew assembleRelease --stacktrace
+          else
+            ./gradlew assembleDebug --stacktrace
+          fi
+
+      - name: Prepare APK Output
+        id: apk_prep
+        run: |
+          mkdir -p output_apks
+          ABI_NAME="${{ github.event.inputs.abi || 'arm64-v8a' }}"
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          
+          # Find generated apks and rename them with clear filenames
+          for apk in $(find app/build/outputs/apk -name "*.apk"); do
+            base=$(basename "$apk")
+            new_name="M9A-Android-${BUILD_TYPE}-${ABI_NAME}-${base}"
+            cp "$apk" "output_apks/${new_name}"
+            echo "Packaged: output_apks/${new_name}"
+          done
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: M9A-Android-APKs
+          path: output_apks/*.apk
+          retention-days: 14
+
+      - name: Release APK (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: output_apks/*.apk
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

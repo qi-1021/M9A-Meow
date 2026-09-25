@@ -1,0 +1,54 @@
+# M9A (重返未来：1999 小助手) Android 打包配方
+# 供 MaaFwApp 构建体系识别并打包 M9A 资源、Agent 运行时与应用标识
+
+# 指向 M9A 资源项目根目录（含 interface.json）
+assets: upstream/m9a
+
+# 进包白名单
+include:
+  - interface.json
+  - tasks/**
+  - resource/**
+  - resource_*/**
+  - data/**
+  - locales/**
+  - agent/**
+  - CONTACT
+  - LICENSE
+  - logo.ico
+
+# 过滤不需要的开发与测试文件
+exclude:
+  - "**/.git/**"
+  - "**/__pycache__/**"
+  - "**/.venv/**"
+  - "**/tests/**"
+  - "**/*.pyc"
+
+# Python Agent 运行时配置
+# 运行时目录树由 scripts/build_agent_bundle.py 构建生成
+agent:
+  sourceDir: agent-dist
+  abi: [arm64-v8a]
+  runtimes:
+    - location: bundle
+      executable: bin/python3
+      args: [-u, agent/main.py]
+      env:
+        PYTHONHOME: "{bundle}/prefix"
+        PYTHONPATH: "{bundle}/site-packages/pure.zip:{bundle}/site-packages"
+        LD_LIBRARY_PATH: "{bundle}/prefix/lib:{bundle}/site-packages/chaquopy/lib:{nativeLibs}"
+        MAAFW_BINARY_PATH: "{nativeLibs}"
+
+# Mirror 酱项目 ID（对齐 M9A 官方标识）
+update:
+  mirrorchyanRid: M9A
+
+# 应用标识与图标
+app:
+  # 包名后缀，生成 com.aliothmoon.maafw.m9a
+  id: m9a
+  # 桌面显示名称
+  label: M9A
+  # 应用图标
+  icon: logo.png

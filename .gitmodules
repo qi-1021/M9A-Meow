@@ -1,0 +1,3 @@
+[submodule "upstream/m9a"]
+	path = upstream/m9a
+	url = https://github.com/MAA1999/M9A.git

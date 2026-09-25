@@ -1,99 +1,91 @@
-# MaaFwApp
+# M9A-Android
 
-MaaFramework 的 Android GUI
+《重返未来：1999》小助手 Android 版，支持全日常自动化、后台虚拟空间挂机与定时执行！
 
-[![License](https://img.shields.io/github/license/Aliothmoon/MaaFwApp?style=flat-square&color=4a90d9)](./LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Android%209%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/Aliothmoon/MaaFwApp)
-[![API](https://img.shields.io/badge/minSdk-28-green?style=flat-square)](https://developer.android.com/google/play/requirements/target-sdk)
-[![Commit Activity](https://img.shields.io/github/commit-activity/m/Aliothmoon/MaaFwApp?style=flat-square&color=00d4aa)](https://github.com/Aliothmoon/MaaFwApp/commits)
-[![Stars](https://img.shields.io/github/stars/Aliothmoon/MaaFwApp?style=flat-square&color=ffca28)](https://github.com/Aliothmoon/MaaFwApp/stargazers)
+本项目将 [M9A (Assistant For Reverse: 1999)](https://github.com/MAA1999/M9A) 移植并打包为 Android 独立应用。底层复用与 [MAA-Meow](https://github.com/Aliothmoon/MAA-Meow) 相同的 Android 宿主架构与 [MaaFwApp](https://github.com/Aliothmoon/MaaFwApp) 特权运行体系。
 
-## 项目简介
+## ✨ 特性
 
-MaaFwApp 是基于 [MaaFramework](https://github.com/MaaXYZ/MaaFramework) 的 Android 通用 GUI。资源开发者通过 [Project Interface V2](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/3.3-ProjectInterfaceV2%E5%8D%8F%E8%AE%AE.md) 描述任务、选项和界面文本，用户即可在手机上配置并运行自动化任务。
+- **M9A 完整能力**：
+  - 继承 M9A 官方 Project Interface V2 的全部日常任务、作战、荒原、签到、领奖、活动刷取等；
+  - 搭载专为 Android 适配的 CPython 3.13 + MaaFramework Python Agent 运行时（支持自定义识别与动作）。
+- **MAA-Meow 同款体验**：
+  - **特权提权**：支持 [Shizuku](https://shizuku.rikka.app/) 或 Root 双模式，Native 控制器直连，完全无需 ADB 调试端口；
+  - **后台虚拟屏**：在独立虚拟显示屏中无感运行游戏，前台手机可正常聊天、看视频，支持实时小窗预览与全屏接管；
+  - **自动锁屏与息屏挂机**：任务完成后自动清理，支持定时唤醒、PIN 码自动解锁；
+  - **定时执行与多通道推送**：支持周日程定时，完成后可推送至 Server酱、Telegram、Discord、钉钉、Bark、SMTP 邮件等。
 
-MaaFramework 跑在 [Shizuku](https://shizuku.rikka.app/) 或 root 拉起的特权进程里，截屏和点击走本机 native controller，不经过 adb。
-
-MaaFwApp 本身不包含具体业务资源。Android 上要把资源在**构建期**打进 APK。接入步骤见 [资源接入](INTEGRATION.md)。
-
-## 主要功能
-
-### 任务与资源
-
-- 支持 Project Interface V2 的任务、选项（选择 / 开关 / 多选 / 输入）、预设、分组、`import`、`global_option` 与国际化。
-- 任务说明支持 Markdown、文件路径和 http(s) 链接；首启欢迎、关于页的联系方式 / 许可 / 仓库地址取自 PI 顶层字段。
-- 可同时保存多份运行配置，配置之间互相独立；同一配置里允许重复添加同一任务。
-- 支持 PI 声明的 agent（自定义识别器 / 动作）。
-
-### 运行与设备
-
-- 后台模式：在虚拟屏上跑任务，手机可正常使用，分辨率可选 720P / 1080P。
-- 前台模式：直接操作当前屏幕；可用悬浮球或音量键呼出操作面板。
-- 后台运行时可自动熄屏挂机；定时触发支持亮屏并输入数字 PIN。
-- 运行中在系统通知里显示进度。
-
-### 定时、通知与诊断
-
-- 支持按规则定时执行，可绑定到指定运行配置。
-- 任务结束可发系统通知，也可推到 Server酱、Telegram、Discord、钉钉、KOOK、SMTP、Bark、Qmsg、Gotify 和自定义 Webhook。
-- 每次运行的日志可回看、导出；另有应用错误日志。
-- 资源可在 PI 里配置 Sentry 遥测；只有资源提供了配置、且用户未关闭「帮助改进本项目」时才会发送。
-
-## 运行要求
+## 📱 运行要求
 
 | 项目 | 要求 |
 |:---|:---|
 | 系统 | Android 9（API 28）及以上 |
-| 提权 | [Shizuku](https://shizuku.rikka.app/) 或 root，二选一，可在应用内切换 |
-| 资源 | 一份符合 Project Interface V2 的资源项目（已打进当前 APK） |
+| 提权方式 | [Shizuku](https://shizuku.rikka.app/) 或 Root 权限（推荐 Shizuku，免 Root 亦可使用） |
+| 架构支持 | `arm64-v8a`（主流手机） / `x86_64`（PC 安卓模拟器） |
+| 游戏客户端 | 手机需安装《重返未来：1999》（官服 / B 服 / OPPO 服等） |
 
-不同资源可能还要求目标应用已安装、通知权限、电池白名单等，以对应资源项目的说明为准。没连上特权进程时只能看界面，不能跑任务。
+## 🚀 云端编译出包（推荐）
 
-## 快速开始
+为了避免本地下载数 GB 的 Android SDK、NDK、CMake 和 Python 交叉编译工具链，本项目已配置好完整的 **GitHub Actions CI/CD 流水线**，全流程在云端完成编译：
 
-### 使用已打包的应用
+1. **推送至 GitHub**：
+   在 GitHub 上创建个人仓库（例如 `qi-1021/M9A-Android`），将本项目推送到仓库：
+   ```bash
+   git remote set-url origin https://github.com/<你的用户名>/M9A-Android.git
+   git push -u origin main
+   ```
+2. **触发云端构建**：
+   - 方式 A：进入 GitHub 仓库页面，点击 **Actions** -> **Build M9A Android APK** -> **Run workflow** 手动触发构建；
+   - 方式 B：打 Tag 推送（例如 `git tag v1.0.0 && git push origin v1.0.0`），云端自动编译并生成 GitHub Release 发布包。
+3. **下载 APK**：
+   编译完成后（约 3-5 分钟），在 Actions 构建详情的 **Artifacts** 区域或 **Releases** 页面即可直接下载打包好的 `.apk` 安装包。
 
-1. 安装资源项目提供的 APK。
-2. 按提示授予通知、电池白名单等权限。
-3. 在应用里选择 Shizuku 或 root，完成授权并等到服务连上。
-4. 选择服务器（资源）、核对任务列表，开始运行。
+## 🛠️ 本地开发与构建（可选）
 
-### 接入自己的资源项目
-
-1. 先按 [Project Interface V2 协议](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/3.3-ProjectInterfaceV2%E5%8D%8F%E8%AE%AE.md) 写好 `interface.json` 和资源。开发和排查 Pipeline 请用 MaaFramework 提供的调试工具，不要把本应用当调试器。
-2. 拷贝 [`pi-profile.sample.yaml`](pi-profile.sample.yaml)，填资源路径和包名，放到本仓库之外。
-3. 在 `local.properties` 里写 `pi.profile=<配方的绝对路径>`（或设环境变量 `PI_PROFILE`）。
-4. 拉 MaaFramework 的 Android 产物并出包，详见 [资源接入](INTEGRATION.md)。
-
-换一份资源 = 换一份配方 + 重新出包，不必改本仓库的代码。
-
-## 资源开发
-
-- [Project Interface V2 协议](https://github.com/MaaXYZ/MaaFramework/blob/main/docs/zh_cn/3.3-ProjectInterfaceV2%E5%8D%8F%E8%AE%AE.md)
-- [MaaPracticeBoilerplate](https://github.com/MaaXYZ/MaaPracticeBoilerplate)
-- [把资源打进 MaaFwApp](INTEGRATION.md)
-
-## 从源码构建
-
-需要 JDK 17、Android SDK、Python 3。构建用 git 计算版本号：独立 checkout 跟随本仓库，作为 submodule 时跟随最外层主仓库。请在 clone 下来的仓库里执行：
+如需在本地构建，请确保已安装 JDK 17、Android SDK & NDK r27c、Python 3.12+：
 
 ```bash
-git clone https://github.com/Aliothmoon/MaaFwApp.git
-cd MaaFwApp
-python scripts/setup_maa_framework.py
-./gradlew :app:installDebug          # Windows 用 .\gradlew.bat
+# 1. 准备 M9A 资源、OCR 识别模型与图标
+python scripts/prepare_m9a.py
+
+# 2. 下载 MaaFramework 核心原生库 (以 arm64 为例)
+python scripts/setup_maa_framework.py --abi arm64-v8a
+
+# 3. 构建 Android Python Agent 运行时 Bundle
+python scripts/build_agent_bundle.py \
+  --out agent-dist \
+  --requirements upstream/m9a/requirements.txt \
+  --no-deps \
+  --exclude pillow --require pillow==11.0.0 \
+  --extra-index-url https://chaquo.com/pypi-13.1/ \
+  --abi arm64-v8a
+
+# 4. 构建 APK
+./gradlew assembleDebug
+```
+产物位置：`app/build/outputs/apk/debug/`
+
+> **注意**：本地脚本严格遵守项目隔离规范，所有临时文件与构建缓存均放在项目目录内（`.tmp/`、`.maa-cache/`、`.maafw/`），不会向系统 `/tmp` 产生残留。
+
+## 📂 项目结构
+
+```text
+Projects/M9A-Android/
+├── upstream/m9a/             # M9A 上游资源子模块 (tasks, resource, agent, interface.json)
+├── app/                      # Android 主模块 (Compose UI, 虚拟显示器, Shizuku/Root 服务)
+├── build-logic/              # Gradle 插件 (PI 资源自动打进 APK, Agent Bundle 组装)
+├── scripts/
+│   ├── prepare_m9a.py        # M9A 资源、OCR 模型与配置准备
+│   ├── build_agent_bundle.py # Android Python 3.13 运行时构建工具
+│   └── setup_maa_framework.py# MaaFramework Android 原生库下载工具
+├── .github/workflows/
+│   └── build-apk.yml         # GitHub Actions 云端构建流水线
+├── pi-profile.yaml           # M9A Android 打包配方
+└── logo.png                  # 应用图标
 ```
 
-未配置 `pi.profile` 时构建不会失败，只是包里没有资源。Release 签名读 `KEYSTORE_PATH` 等环境变量或 `local.properties`；缺了就打出未签名包。
+## 📜 许可证与致谢
 
-## 相关项目
-
-- [MaaFramework](https://github.com/MaaXYZ/MaaFramework) — 基于图像识别的自动化框架
-
-## 开源许可
-
-本项目基于 [GNU Affero General Public License v3.0](LICENSE) 开源。
-
-## 致谢
-
-MaaFwApp 使用了 [MaaFramework](https://github.com/MaaXYZ/MaaFramework)、[Shizuku](https://github.com/RikkaApps/Shizuku) 等开源项目。
+- 本项目遵循 **AGPL-3.0** 开源许可证。
+- 自动化内核与 Android 宿主架构源自 [MaaFramework](https://github.com/MaaXYZ/MaaFramework)、[MAA-Meow](https://github.com/Aliothmoon/MAA-Meow) 与 [MaaFwApp](https://github.com/Aliothmoon/MaaFwApp)。
+- 游戏识别资产与 Agent 逻辑来自 [M9A](https://github.com/MAA1999/M9A)。

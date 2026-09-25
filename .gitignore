@@ -53,3 +53,7 @@ versioncode.txt
 # Python 缓存
 __pycache__/
 *.py[cod]
+
+# 本地打包与临时目录
+/agent-dist/
+/.tmp/
