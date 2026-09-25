@@ -49,6 +49,6 @@ app:
   # 包名后缀，生成 com.aliothmoon.maafw.m9a
   id: m9a
   # 桌面显示名称
-  label: M9A
+  label: M9A-Meow
   # 应用图标
   icon: logo.png

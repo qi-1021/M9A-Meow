@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "name": "M9A-Android",
+  "name": "M9A-Meow",
   "description": "Upstream component versions, pinned commits, and build baseline",
   "components": {
     "m9a": {
