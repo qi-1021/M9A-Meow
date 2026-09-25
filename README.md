@@ -7,14 +7,14 @@
 
 基于 MaaFramework 与图像识别技术，《重返未来：1999》全日常一键长草！
 
+[![GitHub Release](https://img.shields.io/github/v/release/qi-1021/M9A-Meow?style=flat-square&label=Latest)](https://github.com/qi-1021/M9A-Meow/releases/latest)
 [![Build M9A-Meow APK](https://github.com/qi-1021/M9A-Meow/actions/workflows/build-apk.yml/badge.svg)](https://github.com/qi-1021/M9A-Meow/actions/workflows/build-apk.yml)
 [![Auto-Sync Upstream M9A](https://github.com/qi-1021/M9A-Meow/actions/workflows/sync-upstream.yml/badge.svg)](https://github.com/qi-1021/M9A-Meow/actions/workflows/sync-upstream.yml)
 [![License](https://img.shields.io/badge/License-AGPL%20v3.0-blue.svg?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Android%209%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/qi-1021/M9A-Meow)
 [![Architecture](https://img.shields.io/badge/Arch-arm64--v8a%20%7C%20x86__64-orange?style=flat-square)](https://github.com/qi-1021/M9A-Meow)
-[![Upstream M9A](https://img.shields.io/badge/Upstream-M9A-purple?style=flat-square)](https://github.com/MAA1999/M9A)
 
-[下载 APK 构建产物](https://github.com/qi-1021/M9A-Meow/actions) · [问题反馈](https://github.com/qi-1021/M9A-Meow/issues) · [版本锚定清单](#-版本锚定与依赖清单) · [上游升级指南](#-上游版本升级指南)
+[下载最新发布版 (Releases)](https://github.com/qi-1021/M9A-Meow/releases/latest) · [问题反馈](https://github.com/qi-1021/M9A-Meow/issues) · [版本锚定清单](#-版本锚定与依赖清单) · [上游升级指南](#-上游版本升级指南)
 
 </div>
 
