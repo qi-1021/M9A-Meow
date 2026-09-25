@@ -54,7 +54,7 @@
 
 | 组件名称 | 来源仓库 | 当前锚定版本 / Commit | 作用说明 |
 |:---|:---|:---|:---|
-| **M9A** | [MAA1999/M9A](https://github.com/MAA1999/M9A) | Commit [`075bf95`](https://github.com/MAA1999/M9A/commit/075bf95b03aa0e76a9f63649c6ac3da65622f9c2)<br>(Tag: `v4.9.0-25-g075bf95b`) | 业务资源仓库，提供 `interface.json`、Pipeline 流水线、图片模板、各渠道服资源及 Python Agent 业务逻辑 |
+| **M9A** | [MAA1999/M9A](https://github.com/MAA1999/M9A) | Commit [`acce2d4`](https://github.com/MAA1999/M9A/commit/acce2d434bfbd72c1af42af2908baf33665c8a04)<br>(Tag: `v4.9.0-25-g075bf95b`) | 业务资源仓库，提供 `interface.json`、Pipeline 流水线、图片模板、各渠道服资源及 Python Agent 业务逻辑 |
 | **MaaFramework** | [MaaXYZ/MaaFramework](https://github.com/MaaXYZ/MaaFramework) | Release `v5.14.0`<br>(兼容 `v5.13.1`+) | 核心自动化框架动态库（`libMaaFramework.so`、`libMaaUtils.so`、`libMaaAndroidNativeControlUnit.so`） |
 | **MaaAgentCoreAndroid** | [Aliothmoon/MaaAgentCoreAndroid](https://github.com/Aliothmoon/MaaAgentCoreAndroid) | Release Tag `3.13.15-maafw5.12.3` | 专为 Android 交叉编译的 CPython 3.13.15 运行时核心库、标准库及 MaaFramework Python 基础绑定 |
 | **MaaCommonAssets (OCR)** | [MaaXYZ/MaaCommonAssets](https://github.com/MaaXYZ/MaaCommonAssets) | `OCR/ppocr_v6/small`<br>(ONNX 格式) | 轻量级 PP-OCR v6 模型文件（`det.onnx`, `rec.onnx`, `keys.txt`） |

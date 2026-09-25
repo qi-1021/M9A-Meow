@@ -7,15 +7,18 @@
       "name": "M9A (Assistant For Reverse: 1999)",
       "repository": "https://github.com/MAA1999/M9A",
       "path": "upstream/m9a",
-      "pinned_commit": "075bf95b03aa0e76a9f63649c6ac3da65622f9c2",
-      "pinned_tag": "v4.9.0-25-g075bf95b",
+      "pinned_commit": "acce2d434bfbd72c1af42af2908baf33665c8a04",
+      "pinned_tag": "v4.9.0-28-gacce2d43",
       "description": "上游业务资源仓库，提供 interface.json、tasks、resource、多渠道服适配及 Python Agent"
     },
     "maa_framework": {
       "name": "MaaFramework",
       "repository": "https://github.com/MaaXYZ/MaaFramework",
       "pinned_release": "v5.14.0",
-      "compatible_releases": ["v5.13.1", "v5.14.0"],
+      "compatible_releases": [
+        "v5.13.1",
+        "v5.14.0"
+      ],
       "description": "自动化与图像识别底层核心库，提供 libMaaFramework.so、libMaaUtils.so 及 AndroidNativeControlUnit"
     },
     "maa_agent_core_android": {
@@ -29,7 +32,11 @@
       "name": "MaaCommonAssets (OCR)",
       "repository": "https://github.com/MaaXYZ/MaaCommonAssets",
       "model_path": "OCR/ppocr_v6/small",
-      "files": ["det.onnx", "rec.onnx", "keys.txt"],
+      "files": [
+        "det.onnx",
+        "rec.onnx",
+        "keys.txt"
+      ],
       "description": "轻量级 PP-OCR v6 文字识别 ONNX 模型"
     },
     "host_platform": {
