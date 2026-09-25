@@ -136,6 +136,7 @@
     <string name="settings_version">Version</string>
     <string name="settings_version_of">%1$s version</string>
     <string name="settings_framework">MaaFramework</string>
+    <string name="settings_upstream_core">M9A Core</string>
     <string name="settings_telemetry">Help improve this project</string>
     <string name="settings_telemetry_desc">Sends task names and run results to the project author. Screenshots, log text and anything you type are never included</string>
     <string name="settings_project">Project</string>

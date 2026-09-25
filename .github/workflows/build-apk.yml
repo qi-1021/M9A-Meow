@@ -139,6 +139,13 @@ jobs:
         run: |
           chmod +x ./gradlew
           BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+          
+          # 确保注入规范的 SemVer 版本号环境变量，避免 Gradle 回退到 git commit hash 或分支名
+          REF_NAME="${{ github.ref_name }}"
+          if [ -n "$REF_NAME" ] && [[ "$REF_NAME" == v* ]]; then
+            export BUILD_VERSION_NAME="${REF_NAME#v}"
+          fi
+          
           if [ "$BUILD_TYPE" = "release" ]; then
             ./gradlew assembleRelease --stacktrace
           else
@@ -153,13 +160,21 @@ jobs:
           BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
           TAG_OR_REF="${{ github.ref_name }}"
           
+          # 提取当前标准版本号（标签触发优先用标签名，其它情况取最近的 tag）
+          if [ -n "$TAG_OR_REF" ] && [[ "$TAG_OR_REF" == v* ]]; then
+            VER="$TAG_OR_REF"
+          else
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.1")
+            VER="${LATEST_TAG}"
+          fi
+          
           # Find generated apks and rename them with standard names for GitHub release
           for apk in $(find app/build/outputs/apk -name "*.apk"); do
             base=$(basename "$apk")
-            if [ -n "$TAG_OR_REF" ] && [[ "$TAG_OR_REF" == v* ]]; then
-              new_name="M9A-Meow-${TAG_OR_REF}-${ABI_NAME}.apk"
+            if [ "$BUILD_TYPE" = "release" ]; then
+              new_name="M9A-Meow-${VER}-${ABI_NAME}.apk"
             else
-              new_name="M9A-Meow-${BUILD_TYPE}-${ABI_NAME}.apk"
+              new_name="M9A-Meow-${VER}-${ABI_NAME}-debug.apk"
             fi
             cp "$apk" "output_apks/${new_name}"
             echo "Packaged: output_apks/${new_name}"

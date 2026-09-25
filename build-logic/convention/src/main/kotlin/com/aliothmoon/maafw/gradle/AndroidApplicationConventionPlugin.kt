@@ -64,9 +64,9 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                 buildConfigField(
                     "String",
                     "MAFW_PROJECT_VERSION",
-                    "\"" + (pinnedVersionName ?: gitParentVersionName()) + "\"",
+                    "\"" + m9aUpstreamVersion() + "\"",
                 )
-                buildConfigField("String", "MAFW_APP_VERSION", "\"" + gitOwnVersionName() + "\"")
+                buildConfigField("String", "MAFW_APP_VERSION", "\"" + versionName + "\"")
                 buildConfigField("String", "MAFW_FRAMEWORK_VERSION", "\"" + maaFrameworkVersion() + "\"")
                 buildConfigField(
                     "String",

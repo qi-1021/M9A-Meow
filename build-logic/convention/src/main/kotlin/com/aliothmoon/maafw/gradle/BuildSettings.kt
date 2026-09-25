@@ -36,6 +36,25 @@ internal fun Project.signingSetting(envName: String, key: String): String =
 internal fun Project.maaFrameworkVersion(): String =
     rootProject.file(".maafwversion").takeIf { it.isFile }?.readText()?.trim().orEmpty()
 
+/**
+ * The anchored M9A upstream core version, derived from upstream/m9a tag or fallback.
+ */
+internal fun Project.m9aUpstreamVersion(): String {
+    val m9aDir = rootProject.file("upstream/m9a")
+    if (m9aDir.isDirectory) {
+        val tag = runCatching {
+            providers.exec {
+                workingDir(m9aDir)
+                commandLine("git", "describe", "--tags", "--abbrev=0")
+                isIgnoreExitValue = true
+            }.standardOutput.asText.get().trim()
+        }.getOrNull().orEmpty()
+        if (tag.isNotEmpty()) return tag
+    }
+    return "v4.9.0"
+}
+
+
 /** Comma separated list switch, read from local.properties only */
 internal fun Project.listSetting(key: String): List<String> =
     (loadLocalProperties().getProperty(key) ?: "").split(',')

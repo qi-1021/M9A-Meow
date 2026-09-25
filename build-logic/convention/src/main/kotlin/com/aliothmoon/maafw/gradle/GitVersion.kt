@@ -50,13 +50,26 @@ internal fun Project.gitVersionName(workingDir: File): String {
         isIgnoreExitValue = true
     }.standardOutput.asText.get().trim()
     val match = Regex("""^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.]+))?(?:-(\d+)-g[0-9a-f]+)?$""")
-        .matchEntire(desc) ?: return desc.removePrefix("v").ifEmpty { "0.0.0-dev" }
-    val (major, minor, patch, pre, distance) = match.destructured
-    return when {
-        distance.isNotEmpty() -> "$major.$minor.${patch.toInt() + 1}-alpha.$distance"
-        pre.isNotEmpty() -> "$major.$minor.$patch-$pre"
-        else -> "$major.$minor.$patch"
+        .matchEntire(desc)
+    if (match != null) {
+        val (major, minor, patch, pre, distance) = match.destructured
+        return when {
+            distance.isNotEmpty() -> "$major.$minor.${patch.toInt() + 1}-alpha.$distance"
+            pre.isNotEmpty() -> "$major.$minor.$patch-$pre"
+            else -> "$major.$minor.$patch"
+        }
     }
+    // 当在无 tag 的提交或分支上构建时，尝试获取最近的有效 tag，避免裸 commit hash 或分支名导致 SemVer 校验失败
+    val latestTag = runCatching {
+        providers.exec {
+            workingDir(workingDir)
+            commandLine("git", "describe", "--tags", "--abbrev=0")
+            isIgnoreExitValue = true
+        }.standardOutput.asText.get().trim()
+    }.getOrNull().orEmpty()
+    val tagMatch = Regex("""^v?(\d+)\.(\d+)\.(\d+).*$""").matchEntire(latestTag)
+    val fallbackBase = tagMatch?.let { "${it.groupValues[1]}.${it.groupValues[2]}.${it.groupValues[3]}" } ?: "0.1.1"
+    return "$fallbackBase-dev"
 }
 
 internal fun Project.gitVersionName(): String = gitVersionName(versionGitWorkingDir())

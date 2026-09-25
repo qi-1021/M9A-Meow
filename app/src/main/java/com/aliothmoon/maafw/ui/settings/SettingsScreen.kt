@@ -518,20 +518,19 @@ private fun AboutCard(state: SessionUiState) {
 
     MaaCard(title = stringResource(R.string.settings_about), collapsible = true) {
         MaaInfoRow(stringResource(R.string.settings_project), appLabel)
-        // 空串 = 非子模块又没钉版本名，此时它和下面那行同值，不重复显示
+        MaaInfoRow(
+            label = stringResource(R.string.settings_version_of, appLabel),
+            value = BuildConfig.MAFW_APP_VERSION,
+        )
         if (BuildConfig.MAFW_PROJECT_VERSION.isNotEmpty()) {
             MaaInfoRow(
-                label = stringResource(R.string.settings_version_of, appLabel),
+                label = stringResource(
+                    R.string.settings_version_of,
+                    stringResource(R.string.settings_upstream_core),
+                ),
                 value = BuildConfig.MAFW_PROJECT_VERSION,
             )
         }
-        MaaInfoRow(
-            label = stringResource(
-                R.string.settings_version_of,
-                stringResource(R.string.app_name),
-            ),
-            value = BuildConfig.MAFW_APP_VERSION,
-        )
         if (BuildConfig.MAFW_FRAMEWORK_VERSION.isNotEmpty()) {
             MaaInfoRow(
                 label = stringResource(
