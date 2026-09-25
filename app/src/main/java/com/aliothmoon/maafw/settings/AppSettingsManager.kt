@@ -122,10 +122,10 @@ class AppSettingsManager(private val context: Context) : AppSettingsGateway {
     override val mirrorchyanCdk: StateFlow<String> = _mirrorchyanCdk.asStateFlow()
 
     private val _inferenceDevice = MutableStateFlow(defaults.inferenceDevice)
-    val inferenceDevice: StateFlow<String> = _inferenceDevice.asStateFlow()
+    override val inferenceDevice: StateFlow<String> = _inferenceDevice.asStateFlow()
 
     private val _retryFailedTasks = MutableStateFlow(defaults.retryFailedTasks.toBoolean())
-    val retryFailedTasks: StateFlow<Boolean> = _retryFailedTasks.asStateFlow()
+    override val retryFailedTasks: StateFlow<Boolean> = _retryFailedTasks.asStateFlow()
 
     init {
         // 一处 collect 铺开到各字段，而不是每个字段各起一条 stateIn：

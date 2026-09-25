@@ -16,6 +16,7 @@ import com.aliothmoon.maafw.remote.internal.VirtualDisplayManager
 import com.aliothmoon.maafw.runner.AgentPayload
 import com.aliothmoon.maafw.runner.RunOutcome
 import com.aliothmoon.maafw.runner.RunPlanPayload
+import com.aliothmoon.maafw.runner.RuntimeTaskPayload
 import com.aliothmoon.maafw.runner.runPlanWireJson
 import com.aliothmoon.maafw.third.Ln
 import com.sun.jna.Memory
