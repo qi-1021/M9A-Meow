@@ -43,6 +43,7 @@ class MaaFwApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        initLibsu()
         AppPaths.init(this)
         CrashHandler().install()
         val app = this
@@ -81,5 +82,17 @@ class MaaFwApp : Application() {
         koin.get<SessionMessagePresenter>().setup()
         koin.get<ScreenSaverOverlayManager>().setup()
         koin.get<TelemetryController>().setup()
+    }
+
+    private fun initLibsu() {
+        com.topjohnwu.superuser.Shell.enableVerboseLogging = BuildConfig.DEBUG
+        runCatching {
+            @Suppress("DEPRECATION")
+            com.topjohnwu.superuser.Shell.setDefaultBuilder(
+                com.topjohnwu.superuser.Shell.Builder.create()
+                    .setFlags(com.topjohnwu.superuser.Shell.FLAG_REDIRECT_STDERR)
+                    .setTimeout(20)
+            )
+        }
     }
 }

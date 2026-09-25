@@ -10,12 +10,13 @@ import timber.log.Timber
 object SuSpawner : ProcessSpawner {
 
     override fun wrapCommand(launcherPath: String, invocation: String): String =
-        "$invocation >/dev/null 2>&1 &"
+        "chmod 755 ${shellQuote(launcherPath)} && $invocation >/dev/null 2>&1 &"
 
     override fun spawn(command: String): SpawnHandle? {
-        val result = Shell.cmd(command).exec()
-        check(result.code == 0) {
-            result.err.joinToString("\n").ifBlank { "exit code=${result.code}" }
+        val result = runCatching { Shell.cmd(command).exec() }.getOrNull()
+        if (result == null || result.code != 0) {
+            val err = result?.err?.joinToString("\n")?.ifBlank { "exit code=${result?.code}" } ?: "Shell command failed"
+            throw IllegalStateException("su spawn failed: $err")
         }
         return null
     }

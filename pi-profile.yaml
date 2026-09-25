@@ -40,9 +40,9 @@ agent:
         LD_LIBRARY_PATH: "{bundle}/prefix/lib:{bundle}/site-packages/chaquopy/lib:{nativeLibs}"
         MAAFW_BINARY_PATH: "{nativeLibs}"
 
-# Mirror 酱项目 ID（对齐 M9A 官方标识）
+# 自动更新源配置
 update:
-  mirrorchyanRid: M9A
+  githubRepo: qi-1021/M9A-Meow
 
 # 应用标识与图标
 app:

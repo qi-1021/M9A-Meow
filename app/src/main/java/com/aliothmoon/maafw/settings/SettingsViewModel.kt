@@ -75,12 +75,12 @@ class SettingsViewModel(
                     val metadata = projectMetadata()
                     updateService.check(
                         UpdateCheckRequest(
-                            source = appSettings.updateSource.value,
+                            source = effectiveUpdateSource(metadata),
                             currentVersion = currentVersion,
                             channel = appSettings.updateChannel.value,
                             abi = abi,
                             mirrorchyanRid = mirrorchyanRid(metadata),
-                            githubRepository = metadata?.githubRepository,
+                            githubRepository = githubRepository(metadata),
                         ),
                     )
                 }
@@ -174,12 +174,12 @@ class SettingsViewModel(
         updateOperation.update { it.copy(checking = true) }
         val result = updateService.check(
             UpdateCheckRequest(
-                source = appSettings.updateSource.value,
+                source = effectiveUpdateSource(metadata),
                 currentVersion = currentVersion,
                 channel = appSettings.updateChannel.value,
                 abi = abi,
                 mirrorchyanRid = mirrorchyanRid(metadata),
-                githubRepository = metadata.githubRepository,
+                githubRepository = githubRepository(metadata),
             ),
         )
         val available = result as? UpdateCheckResult.UpdateAvailable
@@ -208,12 +208,12 @@ class SettingsViewModel(
         // checker 内部已把非取消异常吞成 SourceFailed，这里不需要再兜一层
         val result = updateService.check(
             UpdateCheckRequest(
-                source = appSettings.updateSource.value,
+                source = effectiveUpdateSource(metadata),
                 currentVersion = currentVersion,
                 channel = appSettings.updateChannel.value,
                 abi = abi,
                 mirrorchyanRid = mirrorchyanRid(metadata),
-                githubRepository = metadata?.githubRepository,
+                githubRepository = githubRepository(metadata),
             ),
         )
         // 错误与更新走同一种呈现（弹窗），二者天然互斥：失败不可能同时是 UpdateAvailable
@@ -248,7 +248,8 @@ class SettingsViewModel(
         claimDownload() ?: return
         downloadJob = coroutineContext.job
 
-        val source = appSettings.updateSource.value
+        val metadata = projectMetadata()
+        val source = effectiveUpdateSource(metadata)
         val cdk = appSettings.mirrorchyanCdk.value
         // Mirror酱 无 CDK 必然解析失败；发请求前就地拦下，
         // 免得用户对着一个网络错误猜原因（MirrorChyanUpdateClient.resolve 有同款类型化校验兜其它调用方）
@@ -266,8 +267,6 @@ class SettingsViewModel(
         updateOperation.update { it.copy(updatePrompt = null) }
 
         try {
-            val metadata = projectMetadata()
-
             // 按所选更新源现场解析下载端点，CDK 只在这一步带上；
             // CDK 业务错误（7xxx）也只会在这里暴露，与检查错误同走弹窗
             val update = when (val resolved = updateService.resolve(
@@ -278,7 +277,7 @@ class SettingsViewModel(
                     currentVersion = currentVersion,
                     mirrorchyanRid = mirrorchyanRid(metadata),
                     mirrorchyanCdk = cdk.takeIf(String::isNotBlank),
-                    githubRepository = metadata?.githubRepository,
+                    githubRepository = githubRepository(metadata),
                 ),
             )) {
                 is UpdateResolveResult.Resolved -> resolved.update
@@ -333,6 +332,17 @@ class SettingsViewModel(
     /** profile 钉的压过 PI 声明的：出包方知道自己发到哪个项目，PI 作者不一定知道 */
     private fun mirrorchyanRid(metadata: ProjectMetadata?): String? =
         BuildConfig.MAFW_MIRRORCHYAN_RID.takeIf(String::isNotBlank) ?: metadata?.mirrorchyanRid
+
+    private fun githubRepository(metadata: ProjectMetadata?): String? =
+        BuildConfig.MAFW_GITHUB_REPO.takeIf(String::isNotBlank) ?: metadata?.githubRepository
+
+    private fun effectiveUpdateSource(metadata: ProjectMetadata?): UpdateSource {
+        val configured = appSettings.updateSource.value
+        if (configured == UpdateSource.MIRRORCHYAN && mirrorchyanRid(metadata).isNullOrBlank()) {
+            return UpdateSource.GITHUB
+        }
+        return configured
+    }
 
     private fun projectMetadata(): ProjectMetadata? =
         (projectRepository.state.value as? ProjectState.Ready)?.definition?.metadata

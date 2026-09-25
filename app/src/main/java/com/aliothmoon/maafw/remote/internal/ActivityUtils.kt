@@ -77,13 +77,47 @@ object ActivityUtils {
         }
     }
 
+    private val KNOWN_REVERSE1999_PACKAGES = listOf(
+        "com.shenlan.m.reverse1999",
+        "com.shenlan.m.reverse1999.bilibili",
+        "com.shenlan.m.reverse1999.mi",
+        "com.shenlan.m.reverse1999.huawei",
+        "com.shenlan.m.reverse1999.nearme.gamecenter",
+        "com.shenlan.m.reverse1999.vivo",
+        "com.bluepoch.m.en.reverse1999",
+        "com.bluepoch.m.jp.reverse1999",
+        "com.bluepoch.m.kr.reverse1999",
+        "com.bluepoch.m.tw.reverse1999"
+    )
+
+    private fun isPackageInstalled(packageName: String): Boolean {
+        return runCatching {
+            FakeContext.get().packageManager.getPackageInfo(packageName, 0)
+            true
+        }.getOrDefault(false)
+    }
+
     /**
      * PI 的 StartApp 允许把 package 写成 `包名/Activity` 的 component 全名（M9A 的 startup.json 即是），
-     * 官方 adb controller 原样塞进 am start 所以两种都能用；走 PackageManager 与包名比对的地方必须先拆
-     * 拆不出来时原样返回，让调用方按纯包名走既有失败路径
+     * 官方 adb controller 原样塞进 am start 所以两种都能用；走 PackageManager 与包名比对的地方必须先拆。
+     * 若拆出的包名在设备上未安装，但检测到其他渠道版本的重返未来1999，自动重定向到已安装的渠道包名。
      */
     @JvmStatic
-    fun packageNameOf(spec: String): String = componentOf(spec)?.packageName ?: spec
+    fun packageNameOf(spec: String): String {
+        val base = componentOf(spec)?.packageName ?: spec
+        if (isPackageInstalled(base)) {
+            return base
+        }
+        if (base.contains("reverse1999")) {
+            for (candidate in KNOWN_REVERSE1999_PACKAGES) {
+                if (isPackageInstalled(candidate)) {
+                    Ln.i("packageNameOf: redirected $base to installed candidate $candidate")
+                    return candidate
+                }
+            }
+        }
+        return base
+    }
 
     private fun componentOf(spec: String): ComponentName? =
         spec.takeIf { it.contains('/') }?.let { ComponentName.unflattenFromString(it) }
@@ -99,20 +133,22 @@ object ActivityUtils {
         val pm = FakeContext.get().packageManager
 
         val component = componentOf(packageName)
-        val targetPackage = component?.packageName ?: packageName
+        val targetPackage = packageNameOf(packageName)
 
-        val intent = if (component != null) {
-            Intent(Intent.ACTION_MAIN)
+        // 1. 优先使用 targetPackage 获取系统当前真实的 LaunchIntent（避免硬编码过时的 Activity 导致启动失败）
+        var intent = pm.getLaunchIntentForPackage(targetPackage)
+            ?: pm.getLeanbackLaunchIntentForPackage(targetPackage)
+
+        // 2. 如果包名解析不到 LaunchIntent，且有指定 component，尝试使用 component
+        if (intent == null && component != null) {
+            intent = Intent(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_LAUNCHER)
                 .setComponent(component)
-        } else {
-            pm.getLaunchIntentForPackage(packageName)
-                ?: pm.getLeanbackLaunchIntentForPackage(packageName)
         }
 
         if (intent == null) {
-            Ln.w("Cannot create launch intent for app $packageName")
-            return false
+            Ln.w("Cannot create launch intent for app $packageName (targetPackage: $targetPackage)")
+            return launchViaMonkey(targetPackage)
         }
 
         var flag = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -122,11 +158,35 @@ object ActivityUtils {
         intent.addFlags(flag)
 
         if (forceStop) {
-            ServiceManager.getActivityManager().forceStopPackage(targetPackage)
+            runCatching {
+                ServiceManager.getActivityManager().forceStopPackage(targetPackage)
+            }.onFailure {
+                Ln.w("forceStopPackage failed for $targetPackage", it)
+            }
         }
-        Ln.i("startApp ${intent.component?.flattenToShortString()}")
+        Ln.i("startApp ${intent.component?.flattenToShortString() ?: targetPackage}")
 
-        return startActivity(intent, displayId)
+        val started = startActivity(intent, displayId)
+        if (!started && displayId == Display.DEFAULT_DISPLAY) {
+            Ln.w("startActivity failed, fallback to monkey for $targetPackage")
+            return launchViaMonkey(targetPackage)
+        }
+        return started
+    }
+
+    private fun launchViaMonkey(packageName: String): Boolean {
+        return try {
+            val args = arrayOf("monkey", "-p", packageName, "-c", "android.intent.category.LAUNCHER", "1")
+            Ln.i("launchViaMonkey: exec ${args.joinToString(" ")}")
+            val process = Runtime.getRuntime().exec(args)
+            val exitCode = process.waitFor()
+            val stdout = process.inputStream.bufferedReader().use { it.readText() }.trim()
+            if (stdout.isNotEmpty()) Ln.i("launchViaMonkey stdout: $stdout")
+            exitCode == 0
+        } catch (e: Exception) {
+            Ln.w("launchViaMonkey failed", e)
+            false
+        }
     }
 
     /**
@@ -320,11 +380,28 @@ object ActivityUtils {
     private fun startViaAmCommand(intent: Intent, displayId: Int): Boolean {
         try {
             val intentUri = intent.toUri(Intent.URI_INTENT_SCHEME)
-            val args = if (displayId == Display.DEFAULT_DISPLAY) {
-                arrayOf("am", "start", intentUri)
-            } else {
-                arrayOf("am", "start", "--display", displayId.toString(), intentUri)
-            }
+            val args = buildList {
+                add("am")
+                add("start")
+                if (displayId != Display.DEFAULT_DISPLAY) {
+                    add("--display")
+                    add(displayId.toString())
+                }
+                val comp = intent.component
+                if (comp != null) {
+                    add("-n")
+                    add(comp.flattenToString())
+                } else if (!intent.`package`.isNullOrEmpty()) {
+                    add("-a")
+                    add(Intent.ACTION_MAIN)
+                    add("-c")
+                    add(Intent.CATEGORY_LAUNCHER)
+                    add("-p")
+                    add(intent.`package`!!)
+                } else {
+                    add(intentUri)
+                }
+            }.toTypedArray()
             Ln.i("startViaAmCommand: displayId=$displayId, exec: ${args.joinToString(" ")}")
             val process = Runtime.getRuntime().exec(args)
             val exitCode = process.waitFor()
@@ -333,8 +410,8 @@ object ActivityUtils {
             val stderr = process.errorStream.bufferedReader().use { it.readText() }.trim()
             if (stdout.isNotEmpty()) Ln.i("startViaAmCommand: am stdout: $stdout")
             if (stderr.isNotEmpty()) Ln.w("startViaAmCommand: am stderr: $stderr")
-            if (exitCode != 0) {
-                Ln.w("startViaAmCommand: am exited with code $exitCode")
+            if (exitCode != 0 || stdout.contains("Error:") || stderr.contains("Error:")) {
+                Ln.w("startViaAmCommand: am exited with code $exitCode or reported error")
                 return false
             }
             Ln.i("startViaAmCommand: success (exitCode=0)")

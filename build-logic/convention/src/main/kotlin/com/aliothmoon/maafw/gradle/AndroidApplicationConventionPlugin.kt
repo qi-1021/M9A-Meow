@@ -73,6 +73,11 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                     "MAFW_MIRRORCHYAN_RID",
                     "\"" + profile.mirrorchyanRid.orEmpty() + "\"",
                 )
+                buildConfigField(
+                    "String",
+                    "MAFW_GITHUB_REPO",
+                    "\"" + (profile.githubRepo ?: "qi-1021/M9A-Meow") + "\"",
+                )
 
                 // Placeholders rather than resValue: with no profile the value stays a resource
                 // reference and the checked-in label and icon keep working untouched
@@ -155,8 +160,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         android.getDefaultProguardFile("proguard-android-optimize.txt"),
                         "proguard-rules.pro",
                     )
-                    if (keystorePath.isNotEmpty()) {
-                        signingConfig = releaseSigning
+                    signingConfig = if (keystorePath.isNotEmpty()) {
+                        releaseSigning
+                    } else {
+                        android.signingConfigs.getByName("debug")
                     }
                 }
             }

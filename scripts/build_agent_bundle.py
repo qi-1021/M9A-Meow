@@ -595,9 +595,22 @@ def main() -> int:
         for item in staging:
             item.cleanup()
 
+    try:
+        from setup_maa_framework import realign_elf_16kb
+        realigned = 0
+        for f in out.rglob("*"):
+            if f.is_file() and (f.suffix == ".so" or f.name.startswith("python")):
+                if realign_elf_16kb(f):
+                    realigned += 1
+        if realigned > 0:
+            log(f"Realigned {realigned} ELF binaries in agent bundle to 16KB")
+    except Exception as e:
+        log(f"Warning: could not run 16KB ELF alignment on agent bundle: {e}")
+
     log(f"agent.sourceDir = {out}")
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -114,14 +114,35 @@ def ensure_local_properties():
             log("Added pi.profile to local.properties")
 
 
+def fix_m9a_startup_packages():
+    """
+    Remove hardcoded invalid activity suffixes from M9A pipeline files.
+    'com.shenlan.m.reverse1999/com.ssgame.mobile.gamesdk.frame.AppStartUpActivity' -> 'com.shenlan.m.reverse1999'
+    """
+    if not M9A_ROOT.exists():
+        return
+    bad_spec = "/com.ssgame.mobile.gamesdk.frame.AppStartUpActivity"
+    for json_file in M9A_ROOT.rglob("*.json"):
+        try:
+            text = json_file.read_text(encoding="utf-8")
+            if bad_spec in text:
+                new_text = text.replace(bad_spec, "")
+                json_file.write_text(new_text, encoding="utf-8")
+                log(f"Fixed launch package in {json_file.relative_to(PROJECT_ROOT)}")
+        except Exception as e:
+            log(f"Warning: could not process {json_file}: {e}")
+
+
 def main():
     log("Starting M9A Android preparation...")
     ensure_m9a_submodule()
     ensure_ocr_models()
     ensure_icon()
     ensure_local_properties()
+    fix_m9a_startup_packages()
     log("Preparation complete!")
 
 
 if __name__ == "__main__":
     main()
+

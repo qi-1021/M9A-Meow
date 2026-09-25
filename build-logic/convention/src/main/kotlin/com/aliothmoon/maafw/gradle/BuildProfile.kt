@@ -67,6 +67,7 @@ internal data class BuildProfile(
     val appIcon: File?,
     /** Wins over the PI's own mirrorchyan_rid: the packager knows where this build is published */
     val mirrorchyanRid: String?,
+    val githubRepo: String?,
 )
 
 /** Nothing configured at all: the package ships without a PI, see the soft failure on syncPiAssets */
@@ -81,6 +82,7 @@ private val NO_PROFILE = BuildProfile(
     appLabel = null,
     appIcon = null,
     mirrorchyanRid = null,
+    githubRepo = null,
 )
 
 /**
@@ -128,6 +130,7 @@ private fun File.readProfile(): BuildProfile {
         appLabel = app?.text("label"),
         appIcon = app?.text("icon")?.let { base.resolvePath(it) },
         mirrorchyanRid = update?.text("mirrorchyanRid")?.requireMirrorchyanRid(),
+        githubRepo = update?.text("githubRepo")?.requireGithubRepo(),
     )
 }
 
@@ -189,6 +192,13 @@ private fun String.requireMirrorchyanRid(): String {
     // 92 is the backslash; isISOControl covers the line breaks
     require(none { it == '"' || it.code == 92 || it.isISOControl() }) {
         "update.mirrorchyanRid must not contain quotes, backslashes or control characters: $this"
+    }
+    return this
+}
+
+private fun String.requireGithubRepo(): String {
+    require(none { it == '"' || it.code == 92 || it.isISOControl() }) {
+        "update.githubRepo must not contain quotes, backslashes or control characters: $this"
     }
     return this
 }

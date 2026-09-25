@@ -267,5 +267,5 @@ class AppSettingsManager(private val context: Context) : AppSettingsGateway {
         runCatching { UpdateChannel.valueOf(raw) }.getOrDefault(UpdateChannel.STABLE)
 
     private fun parseUpdateSource(raw: String): UpdateSource =
-        runCatching { UpdateSource.valueOf(raw) }.getOrDefault(UpdateSource.MIRRORCHYAN)
+        runCatching { UpdateSource.valueOf(raw) }.getOrDefault(UpdateSource.GITHUB)
 }

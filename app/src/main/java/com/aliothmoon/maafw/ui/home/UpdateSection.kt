@@ -51,6 +51,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.core.net.toUri
+import com.aliothmoon.maafw.BuildConfig
 import com.aliothmoon.maafw.R
 import com.aliothmoon.maafw.i18n.asString
 import com.aliothmoon.maafw.settings.SettingsIntent
@@ -95,19 +96,26 @@ internal fun UpdateSection(
         horizontalArrangement = Arrangement.spacedBy(MaaDesignTokens.Spacing.xs),
     ) {
         UpdateRowLabel(stringResource(R.string.settings_update_source))
-        IconButton(
-            onClick = { mirrorInfoVisible = true },
-            modifier = Modifier.size(MaaDesignTokens.IconContainer.sm),
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.Info,
-                contentDescription = stringResource(R.string.settings_update_mirror_about),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(MaaDesignTokens.IconSize.sm),
-            )
+        if (BuildConfig.MAFW_MIRRORCHYAN_RID.isNotBlank()) {
+            IconButton(
+                onClick = { mirrorInfoVisible = true },
+                modifier = Modifier.size(MaaDesignTokens.IconContainer.sm),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = stringResource(R.string.settings_update_mirror_about),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(MaaDesignTokens.IconSize.sm),
+                )
+            }
         }
         Spacer(Modifier.weight(1f))
-        UpdateSource.entries.forEach { source ->
+        val sources = if (BuildConfig.MAFW_MIRRORCHYAN_RID.isBlank()) {
+            listOf(UpdateSource.GITHUB)
+        } else {
+            UpdateSource.entries
+        }
+        sources.forEach { source ->
             MaaChoiceChip(
                 label = source.updateSourceLabel(),
                 selected = update.updateSource == source,
@@ -117,7 +125,7 @@ internal fun UpdateSection(
             )
         }
     }
-    if (update.updateSource == UpdateSource.MIRRORCHYAN) {
+    if (update.updateSource == UpdateSource.MIRRORCHYAN && BuildConfig.MAFW_MIRRORCHYAN_RID.isNotBlank()) {
         CdkInputBlock(update, settingsEnabled, onSettingsIntent)
     }
     Row(

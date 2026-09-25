@@ -14,11 +14,11 @@ on:
       build_type:
         description: 'Build Type'
         required: true
-        default: 'debug'
+        default: 'release'
         type: choice
         options:
-          - debug
           - release
+          - debug
       abi:
         description: 'Target Architecture'
         required: true
@@ -136,7 +136,7 @@ jobs:
       - name: Build APK via Gradle
         run: |
           chmod +x ./gradlew
-          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
           if [ "$BUILD_TYPE" = "release" ]; then
             ./gradlew assembleRelease --stacktrace
           else
@@ -148,12 +148,17 @@ jobs:
         run: |
           mkdir -p output_apks
           ABI_NAME="${{ github.event.inputs.abi || 'arm64-v8a' }}"
-          BUILD_TYPE="${{ github.event.inputs.build_type || 'debug' }}"
+          BUILD_TYPE="${{ github.event.inputs.build_type || 'release' }}"
+          TAG_OR_REF="${{ github.ref_name }}"
           
-          # Find generated apks and rename them with clear filenames
+          # Find generated apks and rename them with standard names for GitHub release
           for apk in $(find app/build/outputs/apk -name "*.apk"); do
             base=$(basename "$apk")
-            new_name="M9A-Meow-${BUILD_TYPE}-${ABI_NAME}-${base}"
+            if [ -n "$TAG_OR_REF" ] && [[ "$TAG_OR_REF" == v* ]]; then
+              new_name="M9A-Meow-${TAG_OR_REF}-${ABI_NAME}.apk"
+            else
+              new_name="M9A-Meow-${BUILD_TYPE}-${ABI_NAME}.apk"
+            fi
             cp "$apk" "output_apks/${new_name}"
             echo "Packaged: output_apks/${new_name}"
           done

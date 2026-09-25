@@ -17,11 +17,13 @@ object RootManager : RemoteAccessPermissionBackend {
     private val listeners = CopyOnWriteArraySet<RemoteAccessStateListener>()
 
     init {
-        Shell.enableVerboseLogging = BuildConfig.DEBUG
-        @Suppress("DEPRECATION")
-        Shell.setDefaultBuilder(
-            Shell.Builder.create().setFlags(Shell.FLAG_REDIRECT_STDERR)
-        )
+        runCatching {
+            Shell.enableVerboseLogging = BuildConfig.DEBUG
+            @Suppress("DEPRECATION")
+            Shell.setDefaultBuilder(
+                Shell.Builder.create().setFlags(Shell.FLAG_REDIRECT_STDERR)
+            )
+        }
     }
 
     fun checkPermissionGranted(): Boolean = isGranted()
@@ -36,14 +38,23 @@ object RootManager : RemoteAccessPermissionBackend {
 
     override fun isAvailable(): Boolean {
         if (isGranted()) return true
-        val exec = System.getenv("PATH")?.split(":") ?: return false
+        val exec = System.getenv("PATH")?.split(":") ?: emptyList()
         for (path in exec) {
             val su = File(path, "su")
-            if (su.canExecute()) {
+            if (su.exists()) {
                 return true
             }
         }
-        return false
+        val commonSuPaths = listOf(
+            "/system/bin/su",
+            "/system/xbin/su",
+            "/sbin/su",
+            "/data/local/su",
+            "/data/local/bin/su",
+            "/data/local/xbin/su",
+        )
+        if (commonSuPaths.any { File(it).exists() }) return true
+        return runCatching { Shell.isAppGrantedRoot() != false }.getOrDefault(false)
     }
 
     override suspend fun requestPermission(): Boolean = withContext(MaaDispatchers.IO) {

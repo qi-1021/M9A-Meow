@@ -22,6 +22,7 @@ import json
 import os
 import re
 import shutil
+import struct
 import sys
 import urllib.error
 import urllib.request
@@ -205,6 +206,108 @@ def find_android_assets(assets: list) -> dict:
     return result
 
 
+def realign_elf_16kb(path: Path) -> bool:
+    """
+    检查并修复 64-bit ELF 共享库的 16KB 内存页面对齐 (Android 15+ 兼容性)。
+    若已对齐则返回 False，若重写修复成功则返回 True。
+    """
+    PAGE = 0x4000  # 16KB
+    PT_LOAD = 1
+
+    try:
+        data = bytearray(path.read_bytes())
+    except Exception as e:
+        print(f"    [WARN] 读取 {path.name} 失败: {e}")
+        return False
+
+    if len(data) < 64 or data[:4] != b"\x7fELF" or data[4] != 2:
+        return False
+
+    e_phoff = struct.unpack_from("<Q", data, 32)[0]
+    e_shoff = struct.unpack_from("<Q", data, 40)[0]
+    e_phentsize, e_phnum, e_shentsize, e_shnum = struct.unpack_from("<HHHH", data, 54)
+
+    phdrs = []
+    for i in range(e_phnum):
+        o = e_phoff + i * e_phentsize
+        f = struct.unpack_from("<IIQQQQQQ", data, o)
+        phdrs.append({
+            "hdr": o,
+            "p_type": f[0],
+            "p_offset": f[2],
+            "p_vaddr": f[3],
+            "p_align": f[7],
+        })
+
+    shdrs = [
+        {
+            "idx": i,
+            "sh_offset": struct.unpack_from("<Q", data, e_shoff + i * e_shentsize + 24)[0],
+        }
+        for i in range(e_shnum)
+    ]
+
+    loads = sorted([p for p in phdrs if p["p_type"] == PT_LOAD], key=lambda p: p["p_offset"])
+    inserts = []
+    cum = 0
+    for ld in loads:
+        new_off = ld["p_offset"] + cum
+        pad = (ld["p_vaddr"] % PAGE - new_off % PAGE) % PAGE
+        if pad:
+            inserts.append((ld["p_offset"], pad))
+            cum += pad
+
+    needs_align_field_update = any(
+        ph["p_type"] == PT_LOAD and ph["p_align"] < PAGE for ph in phdrs
+    )
+
+    if not inserts and not needs_align_field_update:
+        return False
+
+    if not inserts:
+        for ph in phdrs:
+            if ph["p_type"] == PT_LOAD and ph["p_align"] < PAGE:
+                struct.pack_into("<Q", data, ph["hdr"] + 48, PAGE)
+        path.write_bytes(data)
+        return True
+
+    for off, pad in sorted(inserts, reverse=True):
+        data[off:off] = b"\x00" * pad
+
+    sins = sorted(inserts)
+
+    def shift(orig):
+        s = 0
+        for ins_off, p in sins:
+            if ins_off <= orig:
+                s += p
+            else:
+                break
+        return s
+
+    new_e_shoff = e_shoff + shift(e_shoff)
+    struct.pack_into("<Q", data, 40, new_e_shoff)
+    new_e_phoff = e_phoff + shift(e_phoff)
+    if new_e_phoff != e_phoff:
+        struct.pack_into("<Q", data, 32, new_e_phoff)
+
+    for ph in phdrs:
+        new_p_off = ph["p_offset"] + shift(ph["p_offset"])
+        align = PAGE if ph["p_type"] == PT_LOAD else ph["p_align"]
+        pos = new_e_phoff + (ph["hdr"] - e_phoff)
+        struct.pack_into("<Q", data, pos + 8, new_p_off)
+        struct.pack_into("<Q", data, pos + 48, align)
+
+    for sh in shdrs:
+        if sh["sh_offset"] == 0:
+            continue
+        new_sh_off = sh["sh_offset"] + shift(sh["sh_offset"])
+        struct.pack_into("<Q", data, new_e_shoff + sh["idx"] * e_shentsize + 24, new_sh_off)
+
+    path.write_bytes(data)
+    return True
+
+
 def deploy_zip(archive: Path, abi: str, project_root: Path, with_plugins: bool) -> dict:
     jnilib_dir = project_root / JNILIBS_DIR / abi
     if jnilib_dir.exists():
@@ -242,6 +345,15 @@ def deploy_zip(archive: Path, abi: str, project_root: Path, with_plugins: bool) 
 
     plugin_note = f", plugins 跳过: {stats['plugins']}" if stats["plugins"] else ""
     print(f"    so: {stats['so']}, 排除: {stats['skipped']}{plugin_note}")
+
+    # 16KB 页面对齐自动检查与修复 (兼容 Android 15+)
+    realigned_count = 0
+    for so_file in sorted(jnilib_dir.glob("*.so")):
+        if realign_elf_16kb(so_file):
+            realigned_count += 1
+    if realigned_count > 0:
+        print(f"    [ALIGN-16K] 成功重对齐 {realigned_count} 个 .so 库至 16KB 页面")
+
     return stats
 
 
