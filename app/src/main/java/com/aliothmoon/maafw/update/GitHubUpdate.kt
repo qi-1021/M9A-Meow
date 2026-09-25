@@ -230,11 +230,13 @@ internal class GitHubUpdateClient(
             ?: return UpdateResolveResult.Failed(source, UpdateCheckFailure.NO_MATCHING_ASSET)
         val asset = api.selectAsset(release.assets, request.abi)
             ?: return UpdateResolveResult.Failed(source, UpdateCheckFailure.NO_MATCHING_ASSET)
+        // 竞速选出最快镜像站，加速国内下载；失败自动回退原始 URL
+        val downloadUrl = GitHubMirrorRacer.race(asset.downloadUrl)
         UpdateResolveResult.Resolved(
             ResolvedUpdate(
                 source = source,
                 version = release.tag,
-                downloadUrl = asset.downloadUrl,
+                downloadUrl = downloadUrl,
                 sha256 = asset.sha256,
             ),
         )

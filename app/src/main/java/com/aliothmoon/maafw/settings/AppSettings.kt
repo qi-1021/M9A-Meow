@@ -124,4 +124,21 @@ data class AppSettings(
     /** Mirror酱 CDK；只在更新源为 Mirror酱 时有意义，下载解析时带上 */
     @PrefKey(default = "")
     val mirrorchyanCdk: String = "",
+
+    /**
+     * MaaFramework ONNX 推理后端设备，传给 MaaAndroidNativeControllerCreate 的 configJson。
+     * 取值：cpu（默认，稳定）、nnapi（Android Neural Networks API，部分设备有加速）、
+     * vulkan（GPU Vulkan，需要 maafw GPU 支持）。
+     *
+     * 仅在特权进程真正支持对应加速时才有效，不支持时 MaaFramework 自动回退到 cpu
+     */
+    @PrefKey(default = "cpu")
+    val inferenceDevice: String = "cpu",
+
+    /**
+     * 任务失败后补充重试开关：主流程全部任务跑完后，对失败的任务额外补跑一次。
+     * 默认关闭；开启后若全部重试成功，结果升级为"已完成"
+     */
+    @PrefKey(default = "false")
+    val retryFailedTasks: String = "false",
 )

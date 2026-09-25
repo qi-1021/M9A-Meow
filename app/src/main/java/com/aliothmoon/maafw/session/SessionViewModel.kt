@@ -90,6 +90,8 @@ private data class QuickSnapshot(
     val closeAppAfterTask: Boolean = false,
     val touchPreviewEnabled: Boolean = true,
     val telemetryEnabled: Boolean = false,
+    val retryFailedTasks: Boolean = false,
+    val inferenceDevice: String = "cpu",
 )
 
 /** 提权相关几条流的一次快照；只为把外层 combine 的元数压回 4 以内 */
@@ -148,6 +150,8 @@ class SessionViewModel(
                 appSettings.closeAppAfterTask,
                 appSettings.touchPreviewEnabled,
                 appSettings.telemetryEnabled,
+                appSettings.retryFailedTasks,
+                appSettings.inferenceDevice,
                 ::QuickSnapshot,
             ),
         ) { snapshot, quick -> snapshot.copy(quick = quick) }
@@ -271,6 +275,8 @@ class SessionViewModel(
             closeAppAfterTask = settings.quick.closeAppAfterTask,
             touchPreviewEnabled = settings.quick.touchPreviewEnabled,
             telemetryEnabled = settings.quick.telemetryEnabled,
+            retryFailedTasks = settings.quick.retryFailedTasks,
+            inferenceDevice = settings.quick.inferenceDevice,
             wakeUnlockEnabled = settings.env.wakeUnlockEnabled,
             wakeCredential = settings.env.wakeCredential,
             resolutionPreference = settings.resolutionPreference,
@@ -484,6 +490,12 @@ class SessionViewModel(
 
             is SessionIntent.SetTouchPreviewEnabled ->
                 appSettings.setTouchPreviewEnabled(intent.enabled)
+
+            is SessionIntent.SetRetryFailedTasks ->
+                appSettings.setRetryFailedTasks(intent.enabled)
+
+            is SessionIntent.SetInferenceDevice ->
+                appSettings.setInferenceDevice(intent.device)
 
             SessionIntent.ShowOverlay -> openControlOverlay()
             SessionIntent.ApplyForegroundResolution -> applyForegroundResolution()

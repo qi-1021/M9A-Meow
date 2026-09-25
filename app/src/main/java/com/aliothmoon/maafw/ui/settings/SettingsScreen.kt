@@ -475,6 +475,29 @@ private fun OtherCard(
             enabled = !locked,
             onSelect = { onIntent(SessionIntent.SetResolutionPreference(it)) },
         )
+        Spacer(Modifier.height(MaaDesignTokens.Spacing.sm))
+        MaaFieldLabel(stringResource(R.string.settings_inference_device))
+        MaaSingleChoiceFlow(
+            options = listOf(
+                "cpu" to stringResource(R.string.settings_inference_device_cpu),
+                "nnapi" to stringResource(R.string.settings_inference_device_nnapi),
+                "vulkan" to stringResource(R.string.settings_inference_device_vulkan),
+            ),
+            selected = state.inferenceDevice,
+            enabled = !locked,
+            onSelect = { onIntent(SessionIntent.SetInferenceDevice(it)) },
+        )
+        Spacer(Modifier.height(MaaDesignTokens.Spacing.sm))
+        MaaSwitchRow(
+            label = stringResource(R.string.settings_retry_failed_tasks),
+            checked = state.retryFailedTasks,
+            onCheckedChange = { onIntent(SessionIntent.SetRetryFailedTasks(it)) },
+        )
+        Text(
+            text = stringResource(R.string.settings_retry_failed_tasks_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         if (PipController.isSupported(LocalContext.current)) {
             Spacer(Modifier.height(MaaDesignTokens.Spacing.sm))
             MaaSwitchRow(
@@ -541,34 +564,39 @@ private fun AboutCard(state: SessionUiState) {
             )
         }
 
-        metadata.description?.let {
-            MaaDescriptionPanel {
-                MaaMarkdown(text = it, color = MaterialTheme.colorScheme.onSecondaryContainer)
-            }
+        val descriptionText = "这是对于M9A手机端的一种实现。"
+        MaaDescriptionPanel {
+            MaaMarkdown(text = descriptionText, color = MaterialTheme.colorScheme.onSecondaryContainer)
         }
-        metadata.contact?.let { body ->
-            MaaNavigationRow(
-                label = stringResource(R.string.settings_about_contact),
-                onClick = { sheet = AboutSheet(R.string.settings_about_contact, body) },
-            )
-        }
+        val contactBody = """
+            | 联系方式 | 地址 |
+            | :---: | :---: |
+            | 邮箱 | [qiisme1021@icloud.com](mailto:qiisme1021@icloud.com) |
+        """.trimIndent()
+        MaaNavigationRow(
+            label = stringResource(R.string.settings_about_contact),
+            onClick = { sheet = AboutSheet(R.string.settings_about_contact, contactBody) },
+        )
         metadata.license?.let { body ->
             MaaNavigationRow(
                 label = stringResource(R.string.settings_about_license),
                 onClick = { sheet = AboutSheet(R.string.settings_about_license, body) },
             )
         }
-        metadata.github?.let { url ->
-            MaaNavigationRow(
-                label = stringResource(R.string.settings_about_repository),
-                onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, url.toUri())
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    runCatching { context.startActivity(intent) }
-                        .onFailure { Timber.w(it, "No activity handles the project repository link") }
-                },
-            )
+        val repoUrl = if (BuildConfig.MAFW_GITHUB_REPO.isNotBlank()) {
+            "https://github.com/${BuildConfig.MAFW_GITHUB_REPO}"
+        } else {
+            metadata.github ?: "https://github.com/qi-1021/M9A-Meow"
         }
+        MaaNavigationRow(
+            label = stringResource(R.string.settings_about_repository),
+            onClick = {
+                val intent = Intent(Intent.ACTION_VIEW, repoUrl.toUri())
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                runCatching { context.startActivity(intent) }
+                    .onFailure { Timber.w(it, "No activity handles the project repository link") }
+            },
+        )
     }
 
     sheet?.let {

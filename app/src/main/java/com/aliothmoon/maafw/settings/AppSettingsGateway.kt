@@ -77,4 +77,9 @@ interface AppSettingsGateway {
     val mirrorchyanCdk: StateFlow<String>
     suspend fun setMirrorchyanCdk(cdk: String)
 
+    val retryFailedTasks: StateFlow<Boolean>
+    suspend fun setRetryFailedTasks(enabled: Boolean)
+
+    val inferenceDevice: StateFlow<String>
+    suspend fun setInferenceDevice(device: String)
 }

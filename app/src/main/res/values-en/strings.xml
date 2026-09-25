@@ -716,4 +716,12 @@
     <string name="notification_err_gotify_scheme">Gotify server URL must start with http:// or https://</string>
     <string name="notification_err_webhook_url_empty">Webhook URL is empty</string>
     <string name="notification_err_webhook_body_empty">Webhook body template is empty</string>
+
+    <!-- Run & Inference options -->
+    <string name="settings_retry_failed_tasks">Retry Failed Tasks</string>
+    <string name="settings_retry_failed_tasks_desc">After all tasks complete, re-attempt any tasks that failed during this run</string>
+    <string name="settings_inference_device">Inference Acceleration</string>
+    <string name="settings_inference_device_cpu">CPU (Default, Stable)</string>
+    <string name="settings_inference_device_nnapi">NNAPI (NPU/Hardware)</string>
+    <string name="settings_inference_device_vulkan">GPU (Vulkan)</string>
 </resources>

@@ -121,6 +121,12 @@ class AppSettingsManager(private val context: Context) : AppSettingsGateway {
     private val _mirrorchyanCdk = MutableStateFlow(defaults.mirrorchyanCdk)
     override val mirrorchyanCdk: StateFlow<String> = _mirrorchyanCdk.asStateFlow()
 
+    private val _inferenceDevice = MutableStateFlow(defaults.inferenceDevice)
+    val inferenceDevice: StateFlow<String> = _inferenceDevice.asStateFlow()
+
+    private val _retryFailedTasks = MutableStateFlow(defaults.retryFailedTasks.toBoolean())
+    val retryFailedTasks: StateFlow<Boolean> = _retryFailedTasks.asStateFlow()
+
     init {
         // 一处 collect 铺开到各字段，而不是每个字段各起一条 stateIn：
         // 那样 loaded 置位与各字段拿到首值是两件并发的事，早读的人仍可能读到默认值
@@ -148,6 +154,8 @@ class AppSettingsManager(private val context: Context) : AppSettingsGateway {
                 _updateSource.value = parseUpdateSource(s.updateSource)
                 _pipOnHome.value = s.pipOnHome.toBoolean()
                 _mirrorchyanCdk.value = s.mirrorchyanCdk
+                _inferenceDevice.value = s.inferenceDevice
+                _retryFailedTasks.value = s.retryFailedTasks.toBoolean()
                 // 必须是最后一行：置位即宣告上面全部就位
                 _loaded.value = true
             }
@@ -242,6 +250,14 @@ class AppSettingsManager(private val context: Context) : AppSettingsGateway {
 
     override suspend fun setMirrorchyanCdk(cdk: String): Unit = with(AppSettingsSchema) {
         context.dataStore.edit { it[mirrorchyanCdk] = cdk.trim() }
+    }
+
+    override suspend fun setRetryFailedTasks(enabled: Boolean): Unit = with(AppSettingsSchema) {
+        context.dataStore.edit { it[retryFailedTasks] = enabled.toString() }
+    }
+
+    override suspend fun setInferenceDevice(device: String): Unit = with(AppSettingsSchema) {
+        context.dataStore.edit { it[inferenceDevice] = device }
     }
 
     /** 盘上是历史遗留或手改的非法值时回落默认，不让设置读取本身抛异常 */

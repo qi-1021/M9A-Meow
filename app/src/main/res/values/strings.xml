@@ -705,4 +705,12 @@
     <string name="notification_err_gotify_scheme">Gotify 服务器地址要以 http:// 或 https:// 开头</string>
     <string name="notification_err_webhook_url_empty">Webhook 地址未填写</string>
     <string name="notification_err_webhook_body_empty">Webhook 请求体模板未填写</string>
+
+    <!-- 运行与识别优化选项 -->
+    <string name="settings_retry_failed_tasks">任务失败后补充重试</string>
+    <string name="settings_retry_failed_tasks_desc">全部任务执行完毕后，自动尝试重新执行本次执行中失败的任务</string>
+    <string name="settings_inference_device">识别推理加速</string>
+    <string name="settings_inference_device_cpu">CPU (默认稳定)</string>
+    <string name="settings_inference_device_nnapi">NNAPI (硬件加速)</string>
+    <string name="settings_inference_device_vulkan">GPU (Vulkan)</string>
 </resources>

@@ -53,6 +53,10 @@ class MaaFrameworkRunnerPort(
     private val resolutionPreference: () -> ResolutionPreference,
     /** 调试模式：传给特权进程 setup 的 isDebug，开启 MaaFramework 详细日志 */
     private val debugMode: () -> Boolean,
+    /** MaaFramework ONNX 推理后端，每轮现读（用户可在两轮之间改）；取值 cpu/nnapi/vulkan */
+    private val inferenceDevice: () -> String = { "cpu" },
+    /** 主流程结束后是否对失败任务补跑一次；每轮现读 */
+    private val retryFailedTasks: () -> Boolean = { false },
     private val scope: CoroutineScope,
     private val servicePort: PrivilegedServicePort,
 ) : RunnerPort {
@@ -335,6 +339,8 @@ class MaaFrameworkRunnerPort(
             apkPath = apkPath,
             nativeLibraryDir = nativeLibraryDir,
             piEnv = plan.piEnv,
+            inferenceDevice = inferenceDevice(),
+            retryFailedTasks = retryFailedTasks(),
         )
         if (!service.startRun(runPlanWireJson.encodeToString(payload))) {
             return uiTextOf(R.string.msg_reject_service_rejected)

@@ -133,6 +133,38 @@ def fix_m9a_startup_packages():
             log(f"Warning: could not process {json_file}: {e}")
 
 
+def customize_m9a_metadata():
+    """
+    定制 M9A 元数据：
+    1. CONTACT 仅保留邮箱 qiisme1021@icloud.com
+    2. interface.json 仓库地址换为本项目 qi-1021/M9A-Meow，描述设置为“这是对于M9A手机端的一种实现”
+    """
+    if not M9A_ROOT.exists():
+        return
+    
+    # 1. CONTACT 文件定制
+    contact_file = M9A_ROOT / "CONTACT"
+    contact_content = "| 联系方式 | 地址 |\n| :---: | :---: |\n| 邮箱 | [qiisme1021@icloud.com](mailto:qiisme1021@icloud.com) |\n"
+    try:
+        contact_file.write_text(contact_content, encoding="utf-8")
+        log(f"Customized {contact_file.relative_to(PROJECT_ROOT)}")
+    except Exception as e:
+        log(f"Warning: could not write CONTACT: {e}")
+
+    # 2. interface.json 元数据定制
+    interface_file = M9A_ROOT / "interface.json"
+    if interface_file.is_file():
+        try:
+            import json
+            data = json.loads(interface_file.read_text(encoding="utf-8"))
+            data["github"] = "https://github.com/qi-1021/M9A-Meow"
+            data["description"] = "这是对于M9A手机端的一种实现，基于 MaaFramework 与 M9A 开源项目。"
+            interface_file.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8")
+            log(f"Customized metadata in {interface_file.relative_to(PROJECT_ROOT)}")
+        except Exception as e:
+            log(f"Warning: could not customize interface.json: {e}")
+
+
 def main():
     log("Starting M9A Android preparation...")
     ensure_m9a_submodule()
@@ -140,6 +172,7 @@ def main():
     ensure_icon()
     ensure_local_properties()
     fix_m9a_startup_packages()
+    customize_m9a_metadata()
     log("Preparation complete!")
 
 

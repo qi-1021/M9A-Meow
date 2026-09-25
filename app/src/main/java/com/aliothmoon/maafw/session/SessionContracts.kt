@@ -67,6 +67,8 @@ data class SessionUiState(
     val wakeUnlockEnabled: Boolean = false,
     val wakeCredential: String = "",
     val resolutionPreference: ResolutionPreference = ResolutionPreference.P720,
+    val retryFailedTasks: Boolean = false,
+    val inferenceDevice: String = "cpu",
     /**
      * 预览画面的尺寸：后台模式是虚拟屏尺寸（PI controller 的 display_* 推导），
      * 前台模式即设备屏幕尺寸。项目未就绪时为 null
@@ -270,6 +272,12 @@ sealed interface SessionIntent {
 
     /** 虚拟屏分辨率偏好：720P / 1080P */
     data class SetResolutionPreference(val preference: ResolutionPreference) : SessionIntent
+
+    /** 任务失败后补充重试 */
+    data class SetRetryFailedTasks(val enabled: Boolean) : SessionIntent
+
+    /** 识别推理加速设备：cpu / nnapi / vulkan */
+    data class SetInferenceDevice(val device: String) : SessionIntent
 
     /**
      * 开启前台模式的控制层

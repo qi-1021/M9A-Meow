@@ -3,9 +3,9 @@
 
 # M9A-Meow
 
-**在 Android 设备上原生运行 [M9A (重返未来：1999 小助手)](https://github.com/MAA1999/M9A)**
+**这是对于 [M9A (重返未来：1999 小助手)](https://github.com/MAA1999/M9A) 手机端的一种原生实现**
 
-基于 MaaFramework 与图像识别技术，《重返未来：1999》全日常一键长草！
+基于 MaaFramework 与 Android 虚拟显示技术，《重返未来：1999》全日常一键长草！
 
 [![GitHub Release](https://img.shields.io/github/v/release/qi-1021/M9A-Meow?style=flat-square&label=Latest)](https://github.com/qi-1021/M9A-Meow/releases/latest)
 [![Build M9A-Meow APK](https://github.com/qi-1021/M9A-Meow/actions/workflows/build-apk.yml/badge.svg)](https://github.com/qi-1021/M9A-Meow/actions/workflows/build-apk.yml)
@@ -14,13 +14,13 @@
 [![Platform](https://img.shields.io/badge/Platform-Android%209%2B-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/qi-1021/M9A-Meow)
 [![Architecture](https://img.shields.io/badge/Arch-arm64--v8a%20%7C%20x86__64-orange?style=flat-square)](https://github.com/qi-1021/M9A-Meow)
 
-[下载最新发布版 (Releases)](https://github.com/qi-1021/M9A-Meow/releases/latest) · [问题反馈](https://github.com/qi-1021/M9A-Meow/issues) · [版本锚定清单](#-版本锚定与依赖清单) · [上游升级指南](#-上游版本升级指南)
+[下载最新发布版 (Releases)](https://github.com/qi-1021/M9A-Meow/releases/latest) · [问题反馈](https://github.com/qi-1021/M9A-Meow/issues) · 联系邮箱: [qiisme1021@icloud.com](mailto:qiisme1021@icloud.com)
 
 </div>
 
 ---
 
-> 🐱 **MAA-Meow 同款体验**：复用 [MAA-Meow](https://github.com/Aliothmoon/MAA-Meow) 核心开发者维护的 [MaaFwApp](https://github.com/Aliothmoon/MaaFwApp) 架构，无需 Root 权限（推荐通过 Shizuku 授权），游戏可在独立后台虚拟屏中静默运行，前台正常聊天、看视频，互不干扰！
+> 🐱 **这是对于 M9A 手机端的一种实现**：复用 [MAA-Meow](https://github.com/Aliothmoon/MAA-Meow) 核心开发者维护的 [MaaFwApp](https://github.com/Aliothmoon/MaaFwApp) 架构，无需 Root 权限（推荐通过 Shizuku 授权），游戏可在独立后台虚拟屏中静默运行，前台正常聊天、看视频，互不干扰！
 
 ---
 

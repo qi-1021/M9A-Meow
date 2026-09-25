@@ -6,6 +6,7 @@ import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.Surface;
 
 import com.aliothmoon.maafw.ITouchEventCallback;
 import com.aliothmoon.maafw.third.Ln;
@@ -177,9 +178,86 @@ public final class InputControlUtils {
         return ok;
     }
 
+    /**
+     * 将 MaaFramework 的渲染/捕获坐标 (x, y) 转换为当前 Display 旋转与尺寸下的物理注入坐标，
+     * 解决手机横竖屏切换或虚拟显示器旋转时按键错位、偏位的问题。
+     */
+    private static float[] transformCoordinates(int x, int y, int displayId) {
+        try {
+            com.aliothmoon.maafw.third.wrappers.DisplayManager dm = ServiceManager.getDisplayManager();
+            if (dm == null) {
+                return new float[] { x, y };
+            }
+            com.aliothmoon.maafw.third.DisplayInfo info = dm.getDisplayInfo(displayId);
+            if (info == null || info.size() == null) {
+                return new float[] { x, y };
+            }
+            int rotation = info.rotation();
+            com.aliothmoon.maafw.third.Size size = info.size();
+            int curW = size.width();
+            int curH = size.height();
+
+            if (curW <= 0 || curH <= 0) {
+                return new float[] { x, y };
+            }
+
+            // 若无旋转，直接返回原坐标并限制在屏幕内
+            if (rotation == Surface.ROTATION_0) {
+                return new float[] {
+                    Math.max(0, Math.min(curW - 1, x)),
+                    Math.max(0, Math.min(curH - 1, y))
+                };
+            }
+
+            // 计算未旋转自然坐标系下的宽高 (naturalW, naturalH)
+            int naturalW;
+            int naturalH;
+            if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+                naturalW = curH;
+                naturalH = curW;
+            } else {
+                naturalW = curW;
+                naturalH = curH;
+            }
+
+            float targetX;
+            float targetY;
+
+            switch (rotation) {
+                case Surface.ROTATION_90:
+                    // 顺时针旋转90度
+                    targetX = y;
+                    targetY = naturalW - 1 - x;
+                    break;
+                case Surface.ROTATION_180:
+                    // 倒置180度
+                    targetX = naturalW - 1 - x;
+                    targetY = naturalH - 1 - y;
+                    break;
+                case Surface.ROTATION_270:
+                    // 逆时针旋转90度（顺时针270度）
+                    targetX = naturalH - 1 - y;
+                    targetY = x;
+                    break;
+                default:
+                    targetX = x;
+                    targetY = y;
+                    break;
+            }
+
+            return new float[] {
+                Math.max(0, Math.min(curW - 1, targetX)),
+                Math.max(0, Math.min(curH - 1, targetY))
+            };
+        } catch (Throwable t) {
+            return new float[] { x, y };
+        }
+    }
+
     private static synchronized boolean apply(TouchPointerSequence.Kind kind, int x, int y, int contact,
                                               int displayId) {
-        return injectStep(TouchPointerSequence.INSTANCE.plan(kind, slots, contact, x, y), displayId);
+        float[] coords = transformCoordinates(x, y, displayId);
+        return injectStep(TouchPointerSequence.INSTANCE.plan(kind, slots, contact, coords[0], coords[1]), displayId);
     }
 
     public static boolean down(int x, int y, int contact, int displayId) {

@@ -61,6 +61,8 @@ class MaaRunner(private val agentHost: AgentHost) {
      * 而被系统拒（`SecurityException: Permission Denial ... with launchDisplayId=<旧 id>`）
      */
     private var boundDisplayId: Int? = null
+    private var boundResolution: Pair<Int, Int>? = null
+    private var boundInferenceDevice: String? = null
 
     /** agent child 的 cwd，对齐上游 MaaPiCli 的 `agent.cwd = resource_dir_` */
     private var projectRoot: String? = null
@@ -224,6 +226,9 @@ class MaaRunner(private val agentHost: AgentHost) {
 
             var anyFailed = false
             var cancelled = false
+            // 记录首次失败的任务，供重试
+            val failedTasks = mutableListOf<RuntimeTaskPayload>()
+
             payload.tasks.forEachIndexed { index, task ->
                 if (cancelled) return@forEachIndexed
                 if (stopRequested(lib)) {
@@ -237,17 +242,57 @@ class MaaRunner(private val agentHost: AgentHost) {
                 val taskId = lib.MaaTaskerPostTask(currentTasker, task.entry, overrides)
                 if (taskId == INVALID_ID) {
                     anyFailed = true
+                    failedTasks += task
                     notify { onTaskFinished(task.taskName, false, "PostTask 被拒绝") }
                     return@forEachIndexed
                 }
                 val status = lib.MaaTaskerWait(currentTasker, taskId)
                 val success = status == MaaStatus.SUCCEEDED
-                if (!success) anyFailed = true
+                if (!success) {
+                    anyFailed = true
+                    failedTasks += task
+                }
                 notify { onTaskFinished(task.taskName, success, statusText(status)) }
 
                 // Stop 之后 Tasker 会把剩余任务直接判失败，这里提前收尾避免刷一串假失败
                 if (lib.MaaTaskerStopping(currentTasker).toInt() != 0) {
                     cancelled = true
+                }
+            }
+
+            // 任务失败后重试（可选功能，需用户在设置中开启）
+            // 主流程全部跑完后，对失败任务补跑一次；手动取消时不重试
+            if (payload.retryFailedTasks && !cancelled && failedTasks.isNotEmpty()) {
+                Ln.i("MaaRunner: retrying ${failedTasks.size} failed task(s) after main run")
+                var retryAllSuccess = true
+                val retryStart = payload.tasks.size  // 重试计数从已完成数量续接
+                failedTasks.forEachIndexed { retryIndex, task ->
+                    if (stopRequested(lib)) {
+                        cancelled = true
+                        return@forEachIndexed
+                    }
+                    notify { onTaskStarted("[重试] ${task.taskName}", retryStart + retryIndex, retryStart + failedTasks.size) }
+
+                    val overrides = JsonArray(task.pipelineOverrides).toString()
+                    val currentTasker = synchronized(lifecycleLock) { tasker }
+                    val taskId = lib.MaaTaskerPostTask(currentTasker, task.entry, overrides)
+                    if (taskId == INVALID_ID) {
+                        retryAllSuccess = false
+                        notify { onTaskFinished(task.taskName, false, "[重试] PostTask 被拒绝") }
+                        return@forEachIndexed
+                    }
+                    val status = lib.MaaTaskerWait(currentTasker, taskId)
+                    val success = status == MaaStatus.SUCCEEDED
+                    if (!success) retryAllSuccess = false
+                    notify { onTaskFinished(task.taskName, success, "[重试] ${statusText(status)}") }
+
+                    if (lib.MaaTaskerStopping(currentTasker).toInt() != 0) {
+                        cancelled = true
+                    }
+                }
+                // 若重试全部成功，升级为 COMPLETED
+                if (!cancelled && retryAllSuccess) {
+                    anyFailed = false
                 }
             }
 
@@ -320,8 +365,23 @@ class MaaRunner(private val agentHost: AgentHost) {
 
         prepareAgents(lib, payload)?.let { return it }
 
+        val (width, height) = when (payload.displayMode) {
+            DisplayMode.PRIMARY -> PrimaryDisplayManager.getCaptureSize()
+                ?: (DefaultDisplayConfig.WIDTH to DefaultDisplayConfig.HEIGHT)
+
+            else -> {
+                val vd = VirtualDisplayManager.getConfig()
+                (payload.screenWidth.takeIf { it > 0 } ?: vd.width) to
+                    (payload.screenHeight.takeIf { it > 0 } ?: vd.height)
+            }
+        }
+        val currentResolution = width to height
+        val currentInferenceDevice = payload.inferenceDevice
+
         if (controller == null ||
             boundDisplayId != displayId ||
+            boundResolution != currentResolution ||
+            boundInferenceDevice != currentInferenceDevice ||
             lib.MaaControllerConnected(controller).toInt() == 0
         ) {
             releaseController(lib)
@@ -340,6 +400,8 @@ class MaaRunner(private val agentHost: AgentHost) {
             }
             controller = ctrl
             boundDisplayId = displayId
+            boundResolution = currentResolution
+            boundInferenceDevice = currentInferenceDevice
             releaseTasker(lib)
         }
 
@@ -504,6 +566,10 @@ class MaaRunner(private val agentHost: AgentHost) {
             })
             put("display_id", displayId)
             put("force_stop", payload.displayMode != DisplayMode.PRIMARY)
+            // 推理后端：cpu（默认）/ nnapi / vulkan；不支持时 MaaFramework 自动回退 cpu
+            if (payload.inferenceDevice.isNotBlank() && payload.inferenceDevice != "cpu") {
+                put("inference_device", payload.inferenceDevice)
+            }
         }.toString()
     }
 
@@ -528,6 +594,8 @@ class MaaRunner(private val agentHost: AgentHost) {
         controller?.let(lib::MaaControllerDestroy)
         controller = null
         boundDisplayId = null
+        boundResolution = null
+        boundInferenceDevice = null
     }
 
     /** agent client 绑在 resource 上，销毁 resource 前必须先把 client 与 child 收掉 */

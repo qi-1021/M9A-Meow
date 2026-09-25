@@ -33,6 +33,18 @@ data class RunPlanPayload(
      * 特权进程侧还会补 `PI_CLIENT_MAAFW_VERSION`
      */
     val piEnv: Map<String, String> = emptyMap(),
+
+    /**
+     * MaaFramework ONNX 推理后端设备，直接传给 buildControllerConfig 的 inference_device 字段
+     * 取值：cpu（默认）、nnapi、vulkan
+     */
+    val inferenceDevice: String = "cpu",
+
+    /**
+     * 是否在主流程结束后对失败任务补跑一次
+     * 对应 [com.aliothmoon.maafw.settings.AppSettings.retryFailedTasks]
+     */
+    val retryFailedTasks: Boolean = false,
 )
 
 @Serializable

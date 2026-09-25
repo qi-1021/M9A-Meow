@@ -45,6 +45,8 @@ val runnerModule = module {
             runMode = get<AppSettingsManager>().runMode::value,
             resolutionPreference = get<AppSettingsManager>().resolutionPreference::value,
             debugMode = get<AppSettingsManager>().debugMode::value,
+            inferenceDevice = get<AppSettingsManager>().inferenceDevice::value,
+            retryFailedTasks = get<AppSettingsManager>().retryFailedTasks::value,
             scope = get(named<AppCoroutineScope>()),
             servicePort = get(),
         )
