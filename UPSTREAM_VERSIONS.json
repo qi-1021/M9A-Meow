@@ -14,7 +14,7 @@
     "maa_framework": {
       "name": "MaaFramework",
       "repository": "https://github.com/MaaXYZ/MaaFramework",
-      "pinned_release": "v5.14.1",
+      "pinned_release": "v5.14.2",
       "compatible_releases": [
         "v5.13.1",
         "v5.14.0"
