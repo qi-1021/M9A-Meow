@@ -7,8 +7,8 @@
       "name": "M9A (Assistant For Reverse: 1999)",
       "repository": "https://github.com/MAA1999/M9A",
       "path": "upstream/m9a",
-      "pinned_commit": "b3848ff61e6e51fe23d54be79a9e290c412b7484",
-      "pinned_tag": "v4.11.0-5-gb3848ff6",
+      "pinned_commit": "220006b385e9c90280c461d0270c3a1a40d2a0f6",
+      "pinned_tag": "v4.11.0-6-g220006b3",
       "description": "上游业务资源仓库，提供 interface.json、tasks、resource、多渠道服适配及 Python Agent"
     },
     "maa_framework": {
